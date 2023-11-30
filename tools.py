@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 from typing import Union
@@ -57,12 +58,11 @@ def auto_find_memory_free_card(
     :return: card id
     """
     device_count = torch.cuda.device_count()
-    print(f'[Info] device count: {device_count}')
+    logging.info('device count: {}'.format(device_count))
     pynvml.nvmlInit()
     if idle:
         start_time = time.time()
-        print('[Info] waiting for idle card, waiting begin time:',
-              time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time)))
+        logging.info('waiting for idle card, waiting time: {:.0f} seconds'.format(time.time() - start_time))
         while True:
             if time.time() - start_time > idle_max_seconds:
                 # shutdown pynvml
@@ -70,15 +70,15 @@ def auto_find_memory_free_card(
                 raise TimeoutError(
                     f'[Error] no card has enough memory to load model, model memory usage is {model_memory_usage} MB')
             # get all card free memory and use the card with max free memory
-            print('=' * 50)
-            print('[Info] waiting for idle card, waiting time: {:.0f} seconds'.format(time.time() - start_time))
+            logging.info('waiting for idle card, waiting time: {:.0f} seconds'.format(time.time() - start_time))
             free_memory_list = []
             for card_id in card_list:
                 # get card free memory by pynvml
                 handle = pynvml.nvmlDeviceGetHandleByIndex(card_id)
                 info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 free_memory = info.free / 1024 / 1024 / 1024
-                print('[Info] cuda:{}, free memory: {:.1f} GB, model needs: {:.1f} GB'.format(
+                # log card id, free memory and model memory usage
+                logging.info('card id: {}, free memory: {:.1f} GB, model memory usage: {:.1f} GB'.format(
                     card_id,
                     free_memory,
                     model_memory_usage,
@@ -88,20 +88,21 @@ def auto_find_memory_free_card(
                         'card_id': card_id,
                         'free_memory': free_memory,
                     })
-            print('=' * 50)
             if len(free_memory_list) != 0:
                 # shutdown pynvml
                 pynvml.nvmlShutdown()
                 # sort free memory list by free memory descending
                 free_memory_list.sort(key=lambda x: x['free_memory'], reverse=True)
                 max_free_memory_card_id = free_memory_list[0]['card_id']
-                print('[Info] find free card cuda:{}, training begin time: {}'.format(
+                # log free memory card id and now time and waiting time
+                logging.info('free memory card id: {}, now time: {}, waiting time: {:.0f} seconds'.format(
                     max_free_memory_card_id,
-                    time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-                )
+                    time.time(),
+                    time.time() - start_time,
+                ))
                 return max_free_memory_card_id
             else:
-                print('[Info] no card has enough memory to load model, waiting for 60 seconds')
+                logging.info('no card has enough memory to load model, waiting for 60 seconds')
                 time.sleep(60)
 
     else:
