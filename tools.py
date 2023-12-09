@@ -9,13 +9,7 @@ import torch
 from torchinfo import summary
 
 
-def convert_str_params_list(str_params: str, params_type: str, split_marker: str = '#') -> list:
-    params_list = str_params.split(split_marker)
-    params_list = [eval(params_type)(param) for param in params_list]
-    return params_list
-
-
-def set_random_seed(random_seed: Union[float, int]):
+def set_random_seed(random_seed: Union[float, int]) -> None:
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
@@ -24,19 +18,39 @@ def set_random_seed(random_seed: Union[float, int]):
     pl.seed_everything(random_seed)
 
 
+def convert_str_params_list(str_params: str, params_type: str, split_marker: str = '#') -> list:
+    params_list = str_params.split(split_marker)
+    params_list = [eval(params_type)(param) for param in params_list]
+    return params_list
+
+
 def predict_model_memory_usage(
         model: torch.nn.Module,
         input_shape: list[...],
+        batch_size: int,
+        model_dtype: torch.dtype = torch.bfloat16,
+        input_dtypes: list[...] = None,
+        default_device: torch.device = torch.device('cuda:0'),
 ) -> float:
     """
     calculate model memory usage
     :param model: model
     :param input_shape: input shape
+    :param batch_size: batch size
+    :param model_dtype: model dtype
+    :param input_dtypes: input dtypes
+    :param default_device: default device
     :return: predicted memory usage (GB)
     """
-    summary_info = summary(model, input_size=input_shape, device=torch.device('cpu'), mode='train')
+    if input_dtypes is None:
+        input_dtypes = [torch.bfloat16, torch.bfloat16]
+    input_tensor = torch.randn(batch_size, *input_shape)
+    summary_info = summary(model.to(default_device, dtype=model_dtype), input_size=input_tensor.shape,
+                           device=default_device, mode='train', dtypes=input_dtypes)
     memory_usage = summary_info.total_input + summary_info.total_output_bytes + summary_info.total_param_bytes
     # detach input tensor and model, then release memory
+    torch.cuda.empty_cache()
+    del input_tensor
     del model
     del summary_info
     return memory_usage / 1024 / 1024 / 1024
