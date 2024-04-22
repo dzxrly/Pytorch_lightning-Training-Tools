@@ -7,6 +7,7 @@
 - pytorch_lightning
 - torch
 - torchinfo
+- rich
 
 ## Install Dependences
 
