@@ -1,6 +1,6 @@
 torch
 torchinfo
 pynvml
-pytorch_lightning
+lightning
 numpy
 rich

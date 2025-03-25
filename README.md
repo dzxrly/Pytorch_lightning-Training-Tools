@@ -4,14 +4,14 @@
 
 - numpy
 - pynvml
-- pytorch_lightning
+- lightning
 - torch
 - torchinfo
 - rich
 
 ## Install Dependences
 
-假设已经完成了`PyTorch`和`Pytorch_lightning`安装！
+假设已经完成了`PyTorch`和`lightning`安装！
 
 ```bash
 pip install pynvml torchinfo

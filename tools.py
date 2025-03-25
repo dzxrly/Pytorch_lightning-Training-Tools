@@ -2,9 +2,9 @@ import random
 import time
 from typing import Union
 
+import lightning as pl
 import numpy as np
 import pynvml
-import pytorch_lightning as pl
 import torch
 from rich import print
 from torchinfo import summary
