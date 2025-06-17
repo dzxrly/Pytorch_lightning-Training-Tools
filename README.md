@@ -72,7 +72,8 @@ pip install pynvml torchinfo
 
 - `card_list`: `list[int, ...]`，指定使用的显卡编号列表。
 - `model_memory_usage`: `float`，`Float32`下模型的显存占用（GB）。
-- `idle`: `bool`，default: `false`，是否启动等待模式；若不启用，则未找到满足显存要求的显卡时直接报错退出，若启用，则按照`idle_max_seconds`的设置等待空余显卡直到超时。
+- `idle`: `bool`，default: `false`，是否启动等待模式；若不启用，则未找到满足显存要求的显卡时直接报错退出，若启用，则按照
+  `idle_max_seconds`的设置等待空余显卡直到超时。
 - `idle_max_seconds`: `int`，超时时长，仅在启用`idle`时生效。
 
 ### Return
